@@ -7,6 +7,11 @@ project(GGPOng)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH}
+"./extern/ggpo"
+)
+message(${CMAKE_INSTALL_PREFIX})
+
 #set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin)
@@ -17,19 +22,23 @@ find_package(OpenGL REQUIRED)
 add_subdirectory(extern/SFML)
 add_subdirectory(extern/GGPO)
 
-aux_source_directory( "./src/" GGPONG)
-aux_source_directory( "./extern/imgui" IMGUI)
-aux_source_directory( "./extern/imgui-sfml" IMGUI_SFML)
+file(GLOB GGPONG_SRC "./src/*.h" "./src/*.cpp")
+file(GLOB IMGUI_SRC "./extern/imgui/*.h" "./extern/imgui/*.cpp")
+file(GLOB IMGUI_SFML_SRC "./extern/imgui-sfml/*.h" "./extern/imgui-sfml/*.cpp")
 
-add_compile_definitions(IMGUI_USER_CONFIG=<imconfig-SFML.h>)
+add_compile_definitions(
+	IMGUI_USER_CONFIG=<imconfig-SFML.h>
+	_CRT_SECURE_NO_WARNINGS
+)
 
 set(SOURCES
-  ${GGPONG}
-  ${IMGUI}
-  ./extern/imgui-sfml/imgui-SFML.cpp
+  ${GGPONG_SRC}
+  ${IMGUI_SRC}
+  ${IMGUI_SFML_SRC}
 )
 
 include_directories(
+	./src/
 	./extern/imgui-sfml/
 	./extern/imgui/
 )
@@ -43,3 +52,10 @@ target_link_libraries(GGPOng PRIVATE ${OPENGL_LIBRARY})
 target_link_libraries(GGPOng PRIVATE sfml-graphics)
 target_link_libraries(GGPOng PRIVATE sfml-window)
 target_link_libraries(GGPOng PRIVATE GGPO)
+
+add_custom_command(TARGET GGPOng POST_BUILD
+
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	${CMAKE_CURRENT_BINARY_DIR}/extern/ggpo/bin/x86/$<CONFIG>/GGPO.dll
+	${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>
+)

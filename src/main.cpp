@@ -2,147 +2,279 @@
 #include <stdlib.h>
 #include <cmath>
 #include <algorithm>
+#include <assert.h>
 
 #include <imgui-SFML.h>
 #include <imgui.h>
-
 
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 
-sf::Vector2f gameSize(640.f, 480.f);
-sf::Vector2f playerSize(15.f, 100.f);
-sf::Vector2f ballSize(10.f, 10.f);
-float playerBorderOffset = 50.f;
-float playerSpeed = 6.f;
-sf::Vector2f ballInitialVelocity = sf::Vector2f(6.f, 6.f);
+#include <ggponet.h>
 
-struct Player
+#include <Globals.h>
+
+bool __cdecl
+ggpong_begin_game_callback(const char *)
 {
-	sf::Vector2f position;
-	bool upPressed = false;
-	bool downPressed = false;
+	return true;
+}
 
-	void update()
-	{
-		float direction = 0.f;
-		if (upPressed) direction -= 1.f;
-		if (downPressed) direction += 1.f;
-		position.y += direction * playerSpeed;
-		position.y = std::max(std::min(position.y, gameSize.y - playerSize.y * .5f), playerSize.y * .5f);
-	}
-
-	void draw(sf::RenderWindow& _window)
-	{
-		sf::RectangleShape shape(playerSize);
-		shape.setFillColor(sf::Color::White);
-		shape.setPosition(position - playerSize * .5f);
-		_window.draw(shape);
-	}
-};
-Player p1;
-Player p2;
-Player* players[2] = { &p1, &p2 };
-
-struct Ball
+/*
+ * vw_on_event_callback --
+ *
+ * Notification from GGPO that something has happened.  Update the status
+ * text at the bottom of the screen to notify the user.
+ */
+bool __cdecl
+ggpong_on_event_callback(GGPOEvent* _info)
 {
-	sf::Vector2f position;
-	sf::Vector2f velocity;
+	printf("ggpo event: %d\n", _info->code);
+	/*int progress;
+	switch (info->code) {
+	case GGPO_EVENTCODE_CONNECTED_TO_PEER:
+		ngs.SetConnectState(info->u.connected.player, Synchronizing);
+		break;
+	case GGPO_EVENTCODE_SYNCHRONIZING_WITH_PEER:
+		progress = 100 * info->u.synchronizing.count / info->u.synchronizing.total;
+		ngs.UpdateConnectProgress(info->u.synchronizing.player, progress);
+		break;
+	case GGPO_EVENTCODE_SYNCHRONIZED_WITH_PEER:
+		ngs.UpdateConnectProgress(info->u.synchronized.player, 100);
+		break;
+	case GGPO_EVENTCODE_RUNNING:
+		ngs.SetConnectState(Running);
+		renderer->SetStatusText("");
+		break;
+	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
+		ngs.SetDisconnectTimeout(info->u.connection_interrupted.player,
+			timeGetTime(),
+			info->u.connection_interrupted.disconnect_timeout);
+		break;
+	case GGPO_EVENTCODE_CONNECTION_RESUMED:
+		ngs.SetConnectState(info->u.connection_resumed.player, Running);
+		break;
+	case GGPO_EVENTCODE_DISCONNECTED_FROM_PEER:
+		ngs.SetConnectState(info->u.disconnected.player, Disconnected);
+		break;
+	case GGPO_EVENTCODE_TIMESYNC:
+		Sleep(1000 * info->u.timesync.frames_ahead / 60);
+		break;
+	}*/
+	return true;
+}
 
-	void update()
-	{
-		// vertical fist
-		position.y += velocity.y;
-		// up border
-		{
-			float d = ballSize.y * .5f - position.y;
-			if (d >= 0.f)
-			{
-				velocity.y *= -1.f;
-				position.y += d;
-			}
-		}
-		// down border
-		{
-			float d = (gameSize.y - ballSize.y * .5f) - position.y;
-			if (d <= 0.f)
-			{
-				velocity.y *= -1.f;
-				position.y += d;
-			}
-		}
-		// players
-		for (int i = 0; i < 2; ++i)
-		{
-			if (checkPlayerCollision(*players[i]))
-			{
-				float d = ((playerSize + ballSize) * .5f).y - std::fabs(position.y - players[i]->position.y);
-				if (velocity.y > 0.f) { position.y -= d; }
-				else { position.y += d; }
-				velocity.y *= -1.f;
-			}
-		}
 
-		// then horizontal
-		position.x += velocity.x;
-		// left border
-		{
-			float d = ballSize.x * .5f - position.x;
-			if (d >= 0.f)
-			{
-				velocity.x *= -1.f;
-				position.x += d;
-			}
-		}
-		// right border
-		{
-			float d = (gameSize.x - ballSize.x * .5f) - position.x;
-			if (d <= 0.f)
-			{
-				velocity.x *= -1.f;
-				position.x += d;
-			}
-		}
-		// players
-		for (int i = 0; i < 2; ++i)
-		{
-			if (checkPlayerCollision(*players[i]))
-			{
-				float d = ((playerSize + ballSize) * .5f).x - std::fabs(position.x - players[i]->position.x);
-				if (velocity.x > 0.f) { position.x -= d; }
-				else { position.x += d; }
-				velocity.x *= -1.f;
-			}
-		}
+/*
+ * vw_advance_frame_callback --
+ *
+ * Notification from GGPO we should step foward exactly 1 frame
+ * during a rollback.
+ */
+bool __cdecl
+ggpong_advance_frame_callback(int)
+{
+	/*int inputs[MAX_SHIPS] = { 0 };
+	int disconnect_flags;
+
+	// Make sure we fetch new inputs from GGPO and use those to update
+	// the game state instead of reading from the keyboard.
+	ggpo_synchronize_input(ggpo, (void *)inputs, sizeof(int) * MAX_SHIPS, &disconnect_flags);
+	VectorWar_AdvanceFrame(inputs, disconnect_flags);*/
+	return true;
+}
+
+/*
+ * vw_load_game_state_callback --
+ *
+ * Makes our current state match the state passed in by GGPO.
+ */
+bool __cdecl
+ggpong_load_game_state_callback(unsigned char *buffer, int len)
+{
+	//memcpy(&gs, buffer, len);
+	return true;
+}
+
+/*
+ * vw_save_game_state_callback --
+ *
+ * Save the current state to a buffer and return it to GGPO via the
+ * buffer and len parameters.
+ */
+bool __cdecl
+ggpong_save_game_state_callback(unsigned char **buffer, int *len, int *checksum, int)
+{
+	/**len = sizeof(gs);
+	*buffer = (unsigned char *)malloc(*len);
+	if (!*buffer) {
+		return false;
 	}
+	memcpy(*buffer, &gs, *len);
+	*checksum = fletcher32_checksum((short *)*buffer, *len / 2);*/
+	return true;
+}
 
-	bool checkPlayerCollision(const Player& _player)
-	{
-		float l = position.x - ballSize.x * .5f;
-		float r = position.x + ballSize.x * .5f;
-		float t = position.y - ballSize.y * .5f;
-		float b = position.y + ballSize.y * .5f;
+/*
+ * vw_log_game_state --
+ *
+ * Log the gamestate.  Used by the synctest debugging tool.
+ */
+bool __cdecl
+ggpong_log_game_state(char *filename, unsigned char *buffer, int)
+{
+	/*FILE* fp = nullptr;
+	fopen_s(&fp, filename, "w");
+	if (fp) {
+		GameState *gamestate = (GameState *)buffer;
+		fprintf(fp, "GameState object.\n");
+		fprintf(fp, "  bounds: %d,%d x %d,%d.\n", gamestate->_bounds.left, gamestate->_bounds.top,
+			gamestate->_bounds.right, gamestate->_bounds.bottom);
+		fprintf(fp, "  num_ships: %d.\n", gamestate->_num_ships);
+		for (int i = 0; i < gamestate->_num_ships; i++) {
+			Ship *ship = gamestate->_ships + i;
+			fprintf(fp, "  ship %d position:  %.4f, %.4f\n", i, ship->position.x, ship->position.y);
+			fprintf(fp, "  ship %d velocity:  %.4f, %.4f\n", i, ship->velocity.dx, ship->velocity.dy);
+			fprintf(fp, "  ship %d radius:    %d.\n", i, ship->radius);
+			fprintf(fp, "  ship %d heading:   %d.\n", i, ship->heading);
+			fprintf(fp, "  ship %d health:    %d.\n", i, ship->health);
+			fprintf(fp, "  ship %d speed:     %d.\n", i, ship->speed);
+			fprintf(fp, "  ship %d cooldown:  %d.\n", i, ship->cooldown);
+			fprintf(fp, "  ship %d score:     %d.\n", i, ship->score);
+			for (int j = 0; j < MAX_BULLETS; j++) {
+				Bullet *bullet = ship->bullets + j;
+				fprintf(fp, "  ship %d bullet %d: %.2f %.2f -> %.2f %.2f.\n", i, j,
+					bullet->position.x, bullet->position.y,
+					bullet->velocity.dx, bullet->velocity.dy);
+			}
+		}
+		fclose(fp);
+	}*/
+	return true;
+}
 
-		float pl = _player.position.x - playerSize.x * .5f;
-		float pr = _player.position.x + playerSize.x * .5f;
-		float pt = _player.position.y - playerSize.y * .5f;
-		float pb = _player.position.y + playerSize.y * .5f;
+/*
+ * vw_free_buffer --
+ *
+ * Free a save state buffer previously returned in vw_save_game_state_callback.
+ */
+void __cdecl
+ggpong_free_buffer(void *buffer)
+{
+	free(buffer);
+}
 
-		return l < pr && r > pl && t < pb && b > pt;
-	}
-
-	void draw(sf::RenderWindow& _window)
-	{
-		sf::RectangleShape shape(ballSize);
-		shape.setFillColor(sf::Color::White);
-		shape.setPosition(position - ballSize * .5f);
-		_window.draw(shape);
-	}
+enum ApplicationState
+{
+	AS_Menu,
+	AS_Game,
 };
 
-Ball ball;
+ApplicationState as = AS_Menu;
+GGPOSession* ggpo = nullptr;
+
+struct IP
+{
+	char address[32] = { '1', '2', '7', '.', '0', '.', '0', '.', '1', 0 };
+	int port = 7000;
+};
+
+IP localIP;
+IP distantIP;
+
+struct PlayerState
+{
+	GGPOPlayer player = {};
+	GGPOPlayerHandle handle = {};
+};
+PlayerState playerStates[GGPO_MAX_SPECTATORS + GGPO_MAX_PLAYERS];
+
+void SetState(ApplicationState _state)
+{
+	if (_state == as)
+		return;
+
+	// EXIT STATE
+	switch (as)
+	{
+	case AS_Menu:
+		break;
+	case AS_Game:
+	{
+		assert(ggpo);
+		ggpo_close_session(ggpo);
+		ggpo = nullptr;
+	}
+		break;
+	default:
+		break;
+	}
+
+	as = _state;
+
+	// ENTER STATE
+	switch (as)
+	{
+	case AS_Menu:
+		break;
+	case AS_Game:
+	{
+		GGPOSessionCallbacks cb = { 0 };
+		cb.begin_game = ggpong_begin_game_callback;
+		cb.advance_frame = ggpong_advance_frame_callback;
+		cb.load_game_state = ggpong_load_game_state_callback;
+		cb.save_game_state = ggpong_save_game_state_callback;
+		cb.free_buffer = ggpong_free_buffer;
+		cb.on_event = ggpong_on_event_callback;
+		cb.log_game_state = ggpong_log_game_state;
+
+		assert(ggpo == nullptr);
+		GGPOErrorCode result = ggpo_start_session(&ggpo, &cb, "GGPOng", 2, sizeof(int), localIP.port);
+		assert(GGPO_SUCCEEDED(result));
+
+		// automatically disconnect clients after 3000 ms and start our count-down timer
+		// for disconnects after 1000 ms.   To completely disable disconnects, simply use
+		// a value of 0 for ggpo_set_disconnect_timeout.
+		ggpo_set_disconnect_timeout(ggpo, 3000);
+		ggpo_set_disconnect_notify_start(ggpo, 1000);
+
+		for (int i = 0; i < 2; i++) {
+			result = ggpo_add_player(ggpo, &playerStates[i].player, &playerStates[i].handle);
+			//ggpo_set_frame_delay(ggpo, handle, FRAME_DELAY);
+		}
+
+		gs.reset();
+	}
+		break;
+	default:
+		break;
+	}
+}
+
+void ImGui_IpAddress(const char* _ipName, const char* _portName, IP* _ipAddr, bool _isIpEditable)
+{
+	ImGui::PushItemWidth(100.f);
+	if (_isIpEditable)
+	{
+		ImGui::InputText(_ipName, _ipAddr->address, 32);
+	}
+	else
+	{
+		ImGui::Text(_ipAddr->address);
+	}
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+	ImGui::PushItemWidth(50.f);
+	char portBuf[6] = {};
+	sprintf(portBuf, "%d", _ipAddr->port);
+	if (ImGui::InputText(_portName, portBuf, 6))
+	{
+		_ipAddr->port = atoi(portBuf);
+	}
+	ImGui::PopItemWidth();
+}
 
 int main( int _argc, const char* _argv[] )
 {
@@ -152,12 +284,7 @@ int main( int _argc, const char* _argv[] )
 	window.setVerticalSyncEnabled(true);
 	ImGui::SFML::Init(window);
 
-
-	p1.position = sf::Vector2f(playerBorderOffset, gameSize.y * .5f);
-	p2.position = sf::Vector2f(gameSize.x - playerBorderOffset, gameSize.y * .5f);
-
-	ball.position = gameSize * .5f;
-	ball.velocity = ballInitialVelocity;
+	gs.reset();
 
 	sf::Clock deltaClock;
 	while (window.isOpen()) {
@@ -166,46 +293,90 @@ int main( int _argc, const char* _argv[] )
 		while (window.pollEvent(event)) {
 			ImGui::SFML::ProcessEvent(event);
 
-			if (event.type == sf::Event::KeyPressed)
+			if (as == AS_Game)
 			{
-				if (event.key.code == sf::Keyboard::Key::Up) { p1.upPressed = true; }
-				if (event.key.code == sf::Keyboard::Key::Down) { p1.downPressed = true;	}
+				if (event.type == sf::Event::KeyPressed)
+				{
+					if (event.key.code == sf::Keyboard::Key::Up) { gs.p1.upPressed = true; }
+					if (event.key.code == sf::Keyboard::Key::Down) { gs.p1.downPressed = true; }
 
-				if (event.key.code == sf::Keyboard::Key::E) { p2.upPressed = true; }
-				if (event.key.code == sf::Keyboard::Key::D) { p2.downPressed = true; }
+					if (event.key.code == sf::Keyboard::Key::E) { gs.p2.upPressed = true; }
+					if (event.key.code == sf::Keyboard::Key::D) { gs.p2.downPressed = true; }
+				}
+
+				if (event.type == sf::Event::KeyReleased)
+				{
+					if (event.key.code == sf::Keyboard::Key::Up) { gs.p1.upPressed = false; }
+					if (event.key.code == sf::Keyboard::Key::Down) { gs.p1.downPressed = false; }
+
+					if (event.key.code == sf::Keyboard::Key::E) { gs.p2.upPressed = false; }
+					if (event.key.code == sf::Keyboard::Key::D) { gs.p2.downPressed = false; }
+				}
 			}
-			
-			if (event.type == sf::Event::KeyReleased)
-			{
-				if (event.key.code == sf::Keyboard::Key::Up) { p1.upPressed = false; }
-				if (event.key.code == sf::Keyboard::Key::Down) { p1.downPressed = false; }
 
-				if (event.key.code == sf::Keyboard::Key::E) { p2.upPressed = false; }
-				if (event.key.code == sf::Keyboard::Key::D) { p2.downPressed = false; }
-			}
-
-			if (event.type == sf::Event::Closed) {
+			if (event.type == sf::Event::Closed || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape)) {
 				window.close();
 			}
 		}
 
 		// UPDATE
-		p1.update();
-		p2.update();
-		ball.update();
-
 		ImGui::SFML::Update(window, deltaClock.restart());
+
+		switch (as)
+		{
+		case AS_Menu:
+			if (ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove))
+			{
+				ImGui_IpAddress("local IP", "local Port", &localIP, false);
+				ImGui_IpAddress("distant IP", "distant Port", &distantIP, true);
+				ImGui::Separator();
+				if (ImGui::Button("Host Online Game"))
+				{
+					playerStates[0].player.type = GGPO_PLAYERTYPE_LOCAL;
+					playerStates[0].player.player_num = 1;
+					playerStates[1].player.type = GGPO_PLAYERTYPE_REMOTE;
+					playerStates[1].player.player_num = 2;
+					strcpy(playerStates[1].player.u.remote.ip_address, distantIP.address);
+					playerStates[1].player.u.remote.port = distantIP.port;
+					SetState(AS_Game);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Join Online Game"))
+				{
+					playerStates[1].player.type = GGPO_PLAYERTYPE_LOCAL;
+					playerStates[1].player.player_num = 2;
+					playerStates[0].player.type = GGPO_PLAYERTYPE_REMOTE;
+					playerStates[0].player.player_num = 1;
+					strcpy(playerStates[0].player.u.remote.ip_address, distantIP.address);
+					playerStates[0].player.u.remote.port = distantIP.port;
+					SetState(AS_Game);
+				}
+			}
+			ImGui::End();
+			break;
+		case AS_Game:
+			ggpo_idle(ggpo, 0);
+
+			gs.p1.update();
+			gs.p2.update();
+			gs.ball.update(gs);
+			break;
+		default:
+			break;
+		}
 
 		// DRAW
 		window.clear();
 
-		p1.draw(window);
-		p2.draw(window);
-		ball.draw(window);
+		gs.p1.draw(window);
+		gs.p2.draw(window);
+		gs.ball.draw(window);
 
 		ImGui::SFML::Render(window);
 		window.display();
 	}
+
+	SetState(AS_Menu);
 
 	ImGui::SFML::Shutdown();
 
