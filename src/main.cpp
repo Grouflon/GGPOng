@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <assert.h>
+#include <winsock.h>
 
 #include <imgui-SFML.h>
 #include <imgui.h>
@@ -15,6 +16,11 @@
 #include <ggponet.h>
 
 #include <Globals.h>
+#include "SFML/Window/Mouse.hpp"
+#include "SFML/Graphics/CircleShape.hpp"
+#include "SFML/Graphics/Text.hpp"
+
+sf::String s_status;
 
 bool __cdecl
 ggpong_begin_game_callback(const char *)
@@ -32,37 +38,37 @@ bool __cdecl
 ggpong_on_event_callback(GGPOEvent* _info)
 {
 	printf("ggpo event: %d\n", _info->code);
-	/*int progress;
-	switch (info->code) {
+	int progress;
+	switch (_info->code) {
 	case GGPO_EVENTCODE_CONNECTED_TO_PEER:
-		ngs.SetConnectState(info->u.connected.player, Synchronizing);
+		s_status = "Synchronizing...";
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZING_WITH_PEER:
-		progress = 100 * info->u.synchronizing.count / info->u.synchronizing.total;
-		ngs.UpdateConnectProgress(info->u.synchronizing.player, progress);
+		char buf[256];
+		sprintf(buf, "Synchronizing... (%.1f)", 100.f * float(_info->u.synchronizing.count / _info->u.synchronizing.total));
+		s_status = buf;
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZED_WITH_PEER:
-		ngs.UpdateConnectProgress(info->u.synchronized.player, 100);
+		s_status = "Synchronized !";
 		break;
 	case GGPO_EVENTCODE_RUNNING:
-		ngs.SetConnectState(Running);
-		renderer->SetStatusText("");
+		s_status = "";
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
-		ngs.SetDisconnectTimeout(info->u.connection_interrupted.player,
+		/*ngs.SetDisconnectTimeout(info->u.connection_interrupted.player,
 			timeGetTime(),
-			info->u.connection_interrupted.disconnect_timeout);
+			info->u.connection_interrupted.disconnect_timeout);*/
 		break;
 	case GGPO_EVENTCODE_CONNECTION_RESUMED:
-		ngs.SetConnectState(info->u.connection_resumed.player, Running);
+		//ngs.SetConnectState(info->u.connection_resumed.player, Running);
 		break;
 	case GGPO_EVENTCODE_DISCONNECTED_FROM_PEER:
-		ngs.SetConnectState(info->u.disconnected.player, Disconnected);
+		//ngs.SetConnectState(info->u.disconnected.player, Disconnected);
 		break;
 	case GGPO_EVENTCODE_TIMESYNC:
-		Sleep(1000 * info->u.timesync.frames_ahead / 60);
+		//Sleep(1000 * info->u.timesync.frames_ahead / 60);
 		break;
-	}*/
+	}
 	return true;
 }
 
@@ -218,6 +224,7 @@ void SetState(ApplicationState _state)
 	switch (as)
 	{
 	case AS_Menu:
+		s_status = "";
 		break;
 	case AS_Game:
 	{
@@ -240,12 +247,18 @@ void SetState(ApplicationState _state)
 		ggpo_set_disconnect_timeout(ggpo, 3000);
 		ggpo_set_disconnect_notify_start(ggpo, 1000);
 
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 2; i++)
+		{
 			result = ggpo_add_player(ggpo, &playerStates[i].player, &playerStates[i].handle);
-			//ggpo_set_frame_delay(ggpo, handle, FRAME_DELAY);
+			if (playerStates[i].player.type == GGPO_PLAYERTYPE_LOCAL)
+			{
+				ggpo_set_frame_delay(ggpo, playerStates[i].handle, 2);
+			}
 		}
 
 		gs.reset();
+
+		s_status = "Waiting for peers...";
 	}
 		break;
 	default:
@@ -276,11 +289,29 @@ void ImGui_IpAddress(const char* _ipName, const char* _portName, IP* _ipAddr, bo
 	ImGui::PopItemWidth();
 }
 
+
 int main( int _argc, const char* _argv[] )
 {
+	unsigned int frameCount = 0u;
+
+	// Declare a new font
+	sf::Font font;
+	// Load it from a file
+	if (!font.loadFromFile("./data/UbuntuMono-R.ttf"))
+	{
+		printf("ERROR: failed to load font...\n");
+	}
+
+	localIP.port = 7002;
+	distantIP.port = 7003;
+
+	// Enable windows sockets or whatever
+	WSADATA wd = { 0 };
+	WSAStartup(MAKEWORD(2, 2), &wd);
+
 	sf::RenderWindow window(sf::VideoMode(int(gameSize.x), int(gameSize.y)), "GGPOng");
 
-	//window.setFramerateLimit(60);
+	window.setFramerateLimit(60);
 	window.setVerticalSyncEnabled(true);
 	ImGui::SFML::Init(window);
 
@@ -320,11 +351,15 @@ int main( int _argc, const char* _argv[] )
 		}
 
 		// UPDATE
-		ImGui::SFML::Update(window, deltaClock.restart());
+		sf::Time dt = deltaClock.restart();
+		ImGui::SFML::Update(window, dt);
 
 		switch (as)
 		{
 		case AS_Menu:
+
+			ImGui::SetNextWindowPos(ImVec2(100, 100));
+
 			if (ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove))
 			{
 				ImGui_IpAddress("local IP", "local Port", &localIP, false);
@@ -332,8 +367,10 @@ int main( int _argc, const char* _argv[] )
 				ImGui::Separator();
 				if (ImGui::Button("Host Online Game"))
 				{
+					playerStates[0].player.size = sizeof(GGPOPlayer);
 					playerStates[0].player.type = GGPO_PLAYERTYPE_LOCAL;
 					playerStates[0].player.player_num = 1;
+					playerStates[1].player.size = sizeof(GGPOPlayer);
 					playerStates[1].player.type = GGPO_PLAYERTYPE_REMOTE;
 					playerStates[1].player.player_num = 2;
 					strcpy(playerStates[1].player.u.remote.ip_address, distantIP.address);
@@ -360,6 +397,8 @@ int main( int _argc, const char* _argv[] )
 			gs.p1.update();
 			gs.p2.update();
 			gs.ball.update(gs);
+
+			++frameCount;
 			break;
 		default:
 			break;
@@ -371,6 +410,18 @@ int main( int _argc, const char* _argv[] )
 		gs.p1.draw(window);
 		gs.p2.draw(window);
 		gs.ball.draw(window);
+
+		char buf[256];
+		sprintf(buf, "frame %d\n%.1f fps", frameCount, 1.f / dt.asSeconds());
+		sf::Text fpsText(buf, font, 12);
+		fpsText.setFillColor(sf::Color(255,255,255,127));
+		fpsText.setPosition(sf::Vector2f(gameSize.x - 80.f, 20.f));
+		window.draw(fpsText);
+
+		sf::Text statusText(s_status, font, 12);
+		statusText.setFillColor(sf::Color(255, 255, 255, 127));
+		statusText.setPosition(sf::Vector2f(20.f, gameSize.y - 40.f));
+		window.draw(statusText);
 
 		ImGui::SFML::Render(window);
 		window.display();
