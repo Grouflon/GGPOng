@@ -25,6 +25,8 @@ sf::String s_status;
 bool __cdecl
 ggpong_begin_game_callback(const char *)
 {
+	printf("begin game\n");
+
 	return true;
 }
 
@@ -82,6 +84,8 @@ ggpong_on_event_callback(GGPOEvent* _info)
 bool __cdecl
 ggpong_advance_frame_callback(int)
 {
+	printf("advance frame\n");
+
 	/*int inputs[MAX_SHIPS] = { 0 };
 	int disconnect_flags;
 
@@ -100,6 +104,8 @@ ggpong_advance_frame_callback(int)
 bool __cdecl
 ggpong_load_game_state_callback(unsigned char *buffer, int len)
 {
+	printf("load game state\n");
+
 	//memcpy(&gs, buffer, len);
 	return true;
 }
@@ -113,6 +119,8 @@ ggpong_load_game_state_callback(unsigned char *buffer, int len)
 bool __cdecl
 ggpong_save_game_state_callback(unsigned char **buffer, int *len, int *checksum, int)
 {
+	printf("save game state\n");
+
 	/**len = sizeof(gs);
 	*buffer = (unsigned char *)malloc(*len);
 	if (!*buffer) {
@@ -131,6 +139,8 @@ ggpong_save_game_state_callback(unsigned char **buffer, int *len, int *checksum,
 bool __cdecl
 ggpong_log_game_state(char *filename, unsigned char *buffer, int)
 {
+	printf("log game state\n");
+
 	/*FILE* fp = nullptr;
 	fopen_s(&fp, filename, "w");
 	if (fp) {
@@ -169,6 +179,8 @@ ggpong_log_game_state(char *filename, unsigned char *buffer, int)
 void __cdecl
 ggpong_free_buffer(void *buffer)
 {
+	printf("free buffer\n");
+
 	free(buffer);
 }
 
@@ -184,7 +196,7 @@ GGPOSession* ggpo = nullptr;
 struct IP
 {
 	char address[32] = { '1', '2', '7', '.', '0', '.', '0', '.', '1', 0 };
-	int port = 7000;
+	unsigned short port = 7500;
 };
 
 IP localIP;
