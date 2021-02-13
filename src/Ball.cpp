@@ -7,8 +7,6 @@
 
 void Ball::update(GameplayState& _gs)
 {
-	Player* players[2] = { &_gs.p1, &_gs.p2 };
-
 	// vertical fist
 	position.y += velocity.y;
 	// up border
@@ -32,9 +30,9 @@ void Ball::update(GameplayState& _gs)
 	// players
 	for (int i = 0; i < 2; ++i)
 	{
-		if (_checkPlayerCollision(*players[i]))
+		if (_checkPlayerCollision(_gs.players[i]))
 		{
-			float d = ((playerSize + ballSize) * .5f).y - std::fabs(position.y - players[i]->position.y);
+			float d = ((playerSize + ballSize) * .5f).y - std::fabs(position.y - _gs.players[i].position.y);
 			if (velocity.y > 0.f) { position.y -= d; }
 			else { position.y += d; }
 			velocity.y *= -1.f;
@@ -64,9 +62,9 @@ void Ball::update(GameplayState& _gs)
 	// players
 	for (int i = 0; i < 2; ++i)
 	{
-		if (_checkPlayerCollision(*players[i]))
+		if (_checkPlayerCollision(_gs.players[i]))
 		{
-			float d = ((playerSize + ballSize) * .5f).x - std::fabs(position.x - players[i]->position.x);
+			float d = ((playerSize + ballSize) * .5f).x - std::fabs(position.x - _gs.players[i].position.x);
 			if (velocity.x > 0.f) { position.x -= d; }
 			else { position.x += d; }
 			velocity.x *= -1.f;

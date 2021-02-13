@@ -7,11 +7,11 @@
 
 #include <Globals.h>
 
-void Player::update()
+void Player::update(int _input)
 {
 	float direction = 0.f;
-	if (upPressed) direction -= 1.f;
-	if (downPressed) direction += 1.f;
+	if (_input & 1) direction -= 1.f;
+	if (_input & 2) direction += 1.f;
 	position.y += direction * playerSpeed;
 	position.y = std::max(std::min(position.y, gameSize.y - playerSize.y * .5f), playerSize.y * .5f);
 }

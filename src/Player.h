@@ -7,9 +7,7 @@ namespace sf { class RenderWindow; }
 struct Player
 {
 	sf::Vector2f position;
-	bool upPressed = false;
-	bool downPressed = false;
 
-	void update();
+	void update(int _input);
 	void draw(sf::RenderWindow& _window);
 };

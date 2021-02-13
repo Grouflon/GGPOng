@@ -55,9 +55,16 @@ target_link_libraries(GGPOng PRIVATE GGPO)
 
 add_custom_command(TARGET GGPOng POST_BUILD
 
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	${CMAKE_CURRENT_BINARY_DIR}/extern/ggpo/bin/x64/$<CONFIG>/GGPO.dll
-	${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>
+	COMMAND  ${CMAKE_COMMAND} -E copy_if_different
+	         ${CMAKE_CURRENT_BINARY_DIR}/extern/ggpo/bin/x64/$<CONFIG>/GGPO.dll
+	         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>
+)
+
+add_custom_command(TARGET GGPOng POST_BUILD
+
+	COMMAND  ${CMAKE_COMMAND} -E copy_if_different
+	         ${CMAKE_CURRENT_BINARY_DIR}/extern/ggpo/bin/x64/$<CONFIG>/GGPO.pdb
+	         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>
 )
 
 add_custom_command(TARGET GGPOng POST_BUILD

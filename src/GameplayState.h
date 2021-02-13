@@ -5,9 +5,10 @@
 
 struct GameplayState
 {
-	Player p1;
-	Player p2;
+	int frameNumber;
+	Player players[2];
 	Ball ball;
 
 	void reset();
+	void update(int _input[2]);
 };
