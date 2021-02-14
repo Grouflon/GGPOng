@@ -1,10 +1,7 @@
 #pragma once
 
 #include <SFML/System/Vector2.hpp>
-
-#include <GameplayState.h>
 #include <SFML/Graphics/Font.hpp>
-#include <imgui.h>
 
 extern const sf::Vector2f gameSize;
 extern const sf::Vector2f playerSize;

@@ -22,7 +22,7 @@ find_package(OpenGL REQUIRED)
 add_subdirectory(extern/SFML)
 add_subdirectory(extern/GGPO)
 
-file(GLOB GGPONG_SRC "./src/*.h" "./src/*.cpp")
+file(GLOB GGPONG_SRC "./src/*.h" "./src/*.cpp" "./src/Gameplay/*.cpp" "./src/Gameplay/*.h")
 file(GLOB IMGUI_SRC "./extern/imgui/*.h" "./extern/imgui/*.cpp")
 file(GLOB IMGUI_SFML_SRC "./extern/imgui-sfml/*.h" "./extern/imgui-sfml/*.cpp")
 

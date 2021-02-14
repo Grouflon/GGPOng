@@ -2,8 +2,8 @@
 
 #include <random>
 
-#include <Player.h>
-#include <Ball.h>
+#include <Gameplay/Player.h>
+#include <Gameplay/Ball.h>
 
 enum GameState
 {

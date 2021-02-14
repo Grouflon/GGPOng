@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <imgui.h>
 #include <SFML/Graphics/RenderWindow.hpp>
-#include <Globals.h>
+#include <Gameplay/Globals.h>
 #include <imgui-SFML.h>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Graphics/Text.hpp>

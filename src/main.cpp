@@ -6,8 +6,9 @@
 #include <winsock.h>
 #include <SFML/Graphics/Font.hpp>
 #include <SFML/System/Clock.hpp>
+
+#include <Gameplay/Globals.h>
 #include <GGPOngApplication.h>
-#include <Globals.h>
 
 int main( int _argc, const char* _argv[] )
 {

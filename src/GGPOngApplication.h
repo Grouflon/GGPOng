@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ggponet.h>
-#include <GameplayState.h>
+#include <Gameplay/GameplayState.h>
 #include <SFML/System/String.hpp>
 #include <SFML/System/Clock.hpp>
 #include <imgui-SFML.h>

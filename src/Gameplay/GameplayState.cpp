@@ -3,7 +3,7 @@
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 
-#include <Globals.h>
+#include <Gameplay/Globals.h>
 #include <MathFunctions.h>
 
 std::uniform_real_distribution<float> dis(0.0f, 1.0f);

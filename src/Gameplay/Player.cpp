@@ -5,7 +5,7 @@
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 
-#include <Globals.h>
+#include <Gameplay/Globals.h>
 
 void Player::update(int _input)
 {

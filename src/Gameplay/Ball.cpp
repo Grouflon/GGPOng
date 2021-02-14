@@ -3,7 +3,8 @@
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 
-#include <Globals.h>
+#include <Gameplay/Globals.h>
+#include <Gameplay/GameplayState.h>
 #include <MathFunctions.h>
 
 void Ball::update(GameplayState& _gs)
