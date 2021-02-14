@@ -4,6 +4,7 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 
 #include <Globals.h>
+#include <MathFunctions.h>
 
 void Ball::update(GameplayState& _gs)
 {
@@ -41,7 +42,7 @@ void Ball::update(GameplayState& _gs)
 
 	// then horizontal
 	position.x += velocity.x;
-	// left border
+	/*// left border
 	{
 		float d = ballSize.x * .5f - position.x;
 		if (d >= 0.f)
@@ -58,16 +59,30 @@ void Ball::update(GameplayState& _gs)
 			velocity.x *= -1.f;
 			position.x += d;
 		}
-	}
+	}*/
 	// players
 	for (int i = 0; i < 2; ++i)
 	{
 		if (_checkPlayerCollision(_gs.players[i]))
 		{
-			float d = ((playerSize + ballSize) * .5f).x - std::fabs(position.x - _gs.players[i].position.x);
-			if (velocity.x > 0.f) { position.x -= d; }
-			else { position.x += d; }
+			float dx = ((playerSize + ballSize) * .5f).x - std::fabs(position.x - _gs.players[i].position.x);
+			if (velocity.x > 0.f) { position.x -= dx; }
+			else { position.x += dx; }
 			velocity.x *= -1.f;
+
+			sf::Vector2f playerDirection(Sign(position.x - _gs.players[i].position.x), 0.f);
+			float dy = (position.y - _gs.players[i].position.y) / (playerSize.y * .5f) * Sign(playerDirection.x);
+
+			// Full control
+			//velocity = v_rotate(playerDirection, dy * ballMaxAngle * D2R) * v_len(velocity); 
+
+			// Partial control
+			float angle = -Vector2_SignedAngleBetween(velocity, playerDirection) * R2D;
+			angle += dy * playerMaxActionOnAngle;
+			angle = std::max(std::min(angle, ballMaxAngle), -ballMaxAngle);
+
+			velocity = Vector2_Rotate(playerDirection, angle * D2R) * Vector2_Len(velocity);
+
 		}
 	}
 }

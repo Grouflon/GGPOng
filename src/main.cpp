@@ -1,5 +1,5 @@
 #define VSYNC_ON 1
-#define TWO_INSTANCES 1
+#define TWO_INSTANCES 0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,8 +11,12 @@
 
 int main( int _argc, const char* _argv[] )
 {
-	// Load font from file
-	if (!font.loadFromFile("./data/UbuntuMono-R.ttf"))
+	// Load fonts from files
+	if (!textFont.loadFromFile("./data/UbuntuMono-R.ttf"))
+	{
+		printf("ERROR: failed to load font...\n");
+	}
+	if (!titleFont.loadFromFile("./data/slkscr.ttf"))
 	{
 		printf("ERROR: failed to load font...\n");
 	}

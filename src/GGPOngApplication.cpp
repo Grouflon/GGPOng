@@ -70,7 +70,7 @@ void GGPOngApplication::init(const char* _name, int _windowX, int _windowY, bool
 	assert(!m_window);
 
 	m_name = _name;
-	m_window = new sf::RenderWindow(sf::VideoMode(int(gameSize.x), int(gameSize.y)), _name);
+	m_window = new sf::RenderWindow(sf::VideoMode(int(gameSize.x), int(gameSize.y)), _name, sf::Style::Titlebar|sf::Style::Close);
 	m_window->setPosition(sf::Vector2i(_windowX, _windowY));
 
 	if (_vsyncEnabled)
@@ -81,7 +81,7 @@ void GGPOngApplication::init(const char* _name, int _windowX, int _windowY, bool
 
 	ImGui::SFML::Init(m_imguiSFMLContext, *m_window, true);
 
-	m_gs.reset();
+	m_gs.init();
 }
 
 void GGPOngApplication::shutdown()
@@ -226,18 +226,16 @@ void GGPOngApplication::draw()
 
 	m_window->clear();
 
-	m_gs.players[0].draw(*m_window);
-	m_gs.players[1].draw(*m_window);
-	m_gs.ball.draw(*m_window);
+	m_gs.draw(*m_window);
 
 	char buf[256];
 	sprintf(buf, "frame %d\n%.1f fps", m_gs.frameNumber, 1.f / m_dt.asSeconds());
-	sf::Text fpsText(buf, font, 12);
+	sf::Text fpsText(buf, textFont, 12);
 	fpsText.setFillColor(sf::Color(255, 255, 255, 127));
 	fpsText.setPosition(sf::Vector2f(gameSize.x - 80.f, 20.f));
 	m_window->draw(fpsText);
 
-	sf::Text statusText(m_status, font, 12);
+	sf::Text statusText(m_status, textFont, 12);
 	statusText.setFillColor(sf::Color(255, 255, 255, 127));
 	statusText.setPosition(sf::Vector2f(20.f, gameSize.y - 40.f));
 	m_window->draw(statusText);
@@ -320,7 +318,7 @@ void GGPOngApplication::_setApplicationState(ApplicationState _state)
 			}
 		}
 
-		m_gs.reset();
+		m_gs.init();
 
 		_setConnectionState(CS_Connecting);
 	}
